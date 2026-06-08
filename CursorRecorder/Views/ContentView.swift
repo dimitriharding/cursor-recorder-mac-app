@@ -233,6 +233,14 @@ private struct DeviceSection: View {
                 .help("Tear down the connection, re-enable the iPhone screen source, and reconnect.")
             }
 
+            Button {
+                coordinator.scan()
+            } label: {
+                Label("Reload Windows & Simulators", systemImage: "macwindow.on.rectangle")
+            }
+            .disabled(coordinator.isScanning || coordinator.state.isBusy)
+            .help("Re-scan open windows and running iOS Simulators (use after opening iPhone Mirroring or a Simulator).")
+
             if coordinator.mirroringNeedsPermission {
                 hintBox {
                     Text("Screen Recording permission needed").font(.caption).bold()

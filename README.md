@@ -15,6 +15,8 @@ one-click MP4 with a custom, Mac-controlled cursor overlay.
 - **Android (USB)** capture via Homebrew-installed `scrcpy` + `adb`.
 - A visual gallery of cursors (built-in pack + an imported gaming pack, or your own PNGs),
   with scale, opacity, shadow, smoothing, and hotspot controls.
+- A menu bar controller for starting, stopping, canceling, revealing the last recording,
+  switching quality, and optionally running without a Dock icon.
 
 Target: macOS 14+. Universal (Apple Silicon + Intel).
 
@@ -23,7 +25,7 @@ Target: macOS 14+. Universal (Apple Silicon + Intel).
 Grab the latest signed and Apple-notarized build from
 **[Releases](https://github.com/dimitriharding/cursor-recorder-mac-app/releases/latest)**:
 
-1. Download `Cursor-Recorder-1.0.0-macOS.zip`, unzip, and move **Cursor Recorder.app** to Applications.
+1. Download `Cursor-Recorder-1.0.1-macOS.zip`, unzip, and move **Cursor Recorder.app** to Applications.
 2. Double-click to open. The release is signed with Developer ID and notarized by Apple, so Gatekeeper should allow it without a security override.
 3. Grant **Screen Recording** (for iPhone Mirroring / Simulator) and **Camera/Microphone**
    (for the USB iPhone source) when prompted, then relaunch.

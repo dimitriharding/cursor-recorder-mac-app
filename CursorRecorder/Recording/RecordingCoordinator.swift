@@ -30,6 +30,10 @@ final class RecordingCoordinator: ObservableObject {
     @Published var outputFileName: String = ""
     /// Output resolution / quality preset.
     @Published var recordingQuality: RecordingQuality = .p1080 { didSet { persistSettings() } }
+    /// Run as a menu-bar utility with no Dock icon (the menu bar item stays regardless).
+    @Published var menuBarOnly: Bool = false {
+        didSet { persistSettings(); applyActivationPolicy() }
+    }
 
     /// Capture frame rate for the ScreenCaptureKit (Mirroring / Simulator) path.
     @Published var captureFPS: Int = 60 {
@@ -95,6 +99,15 @@ final class RecordingCoordinator: ObservableObject {
                     guard let self, !self.state.isBusy, !self.isScanning else { return }
                     self.scan()
                 }
+            }
+        }
+
+        // In menu-bar-only mode, re-hide the Dock icon once the window is closed.
+        center.addObserver(forName: NSWindow.willCloseNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.menuBarOnly else { return }
+                let stillVisible = NSApp.windows.contains { $0.canBecomeMain && $0.isVisible && !$0.isMiniaturized }
+                if !stillVisible { NSApp.setActivationPolicy(.accessory) }
             }
         }
     }
@@ -230,6 +243,27 @@ final class RecordingCoordinator: ObservableObject {
     }
 
     // MARK: - Recording controls
+
+    var isRecordingActive: Bool { if case .recording = state { return true }; return false }
+    var canStartRecording: Bool { if case .ready = state { return true }; return false }
+
+    /// Short status string for the menu-bar menu header.
+    var menuBarStatus: String {
+        switch state {
+        case .idle: return "No phone connected"
+        case .ready: return "Ready" + (selectedDevice.map { " — \($0.name)" } ?? "")
+        case .recording: return "Recording…"
+        case .stopping: return "Stopping…"
+        case .postProcessing: return "Processing…"
+        case .saved: return "Saved"
+        case .failed: return "Failed"
+        case .waitingForTrust: return "iPhone not shared"
+        case .unsupported: return "Source unsupported"
+        case .androidToolsMissing: return "Android tools missing"
+        case .androidUnauthorized: return "Android unauthorized"
+        case .androidDebuggingMissing: return "USB debugging off"
+        }
+    }
 
     func toggleRecording() {
         switch state {
@@ -437,6 +471,27 @@ final class RecordingCoordinator: ObservableObject {
         }
     }
 
+    /// Show / focus the main window (recreating it if it was closed), flipping back to a
+    /// normal Dock app while it's visible even in menu-bar-only mode.
+    func bringToFront(openWindow: () -> Void) {
+        NSApp.setActivationPolicy(.regular)
+        openWindow()
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.windows.first { $0.canBecomeMain }?.makeKeyAndOrderFront(nil)
+    }
+
+    /// Apply the Dock-icon visibility from `menuBarOnly`.
+    func applyActivationPolicy() {
+        if menuBarOnly {
+            // Only hide the Dock icon once no main window is on screen.
+            let hasMain = NSApp.windows.contains { $0.canBecomeMain && $0.isVisible }
+            NSApp.setActivationPolicy(hasMain ? .regular : .accessory)
+        } else {
+            NSApp.setActivationPolicy(.regular)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    }
+
     /// Present the macOS share sheet for the last recording (AirDrop, Messages, Save to…, etc.).
     func shareLastRecording() {
         guard let url = lastOutputURL,
@@ -555,6 +610,7 @@ final class RecordingCoordinator: ObservableObject {
         d.set(Double(crop.left), forKey: "cropLeft")
         d.set(Double(crop.right), forKey: "cropRight")
         d.set(recordingQuality.rawValue, forKey: "recordingQuality")
+        d.set(menuBarOnly, forKey: "menuBarOnly")
     }
 
     private func loadSettings() {
@@ -590,6 +646,7 @@ final class RecordingCoordinator: ObservableObject {
         if let q = d.string(forKey: "recordingQuality"), let parsed = RecordingQuality(rawValue: q) {
             recordingQuality = parsed
         }
+        if d.object(forKey: "menuBarOnly") != nil { menuBarOnly = d.bool(forKey: "menuBarOnly") }
         if d.object(forKey: "cropTop") != nil {
             crop = CropInsets(
                 top: CGFloat(d.double(forKey: "cropTop")),
