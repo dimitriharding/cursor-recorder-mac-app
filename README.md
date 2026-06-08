@@ -1,15 +1,18 @@
 # Cursor Recorder
 
-A thin native macOS (SwiftUI) app for recording phone gameplay and exporting a one-click
-MP4 with a custom, Mac-controlled cursor overlay.
+A native macOS (SwiftUI) recorder for app demos, gameplay, product videos, iPhone
+Mirroring, iOS Simulator, individual Mac windows, and USB-connected phones. It exports a
+one-click MP4 with a custom, Mac-controlled cursor overlay.
 
 ![Cursor Recorder](screenshot-cursor-recorder.png)
 
+- **Mac windows** via ScreenCaptureKit — record a selected app window with the same
+  custom cursor overlay used for phone captures.
 - **iPhone (USB)** capture via AVFoundation — the trusted, USB-tethered iPhone screen
   source, exposed by enabling CoreMediaIO screen-capture devices.
 - **iPhone Mirroring & iOS Simulator** capture via ScreenCaptureKit — record the window
   wirelessly; drive the phone in Apple's Mirroring window and your cursor renders on top.
-- **Android** capture via Homebrew-installed `scrcpy` + `adb`.
+- **Android (USB)** capture via Homebrew-installed `scrcpy` + `adb`.
 - A visual gallery of cursors (built-in pack + an imported gaming pack, or your own PNGs),
   with scale, opacity, shadow, smoothing, and hotspot controls.
 
@@ -17,11 +20,11 @@ Target: macOS 14+. Universal (Apple Silicon + Intel).
 
 ## Download
 
-Grab the latest signed & notarized build from
-**[Releases](https://github.com/dimitriharding/cursor-recoder/releases/latest)**:
+Grab the latest signed and Apple-notarized build from
+**[Releases](https://github.com/dimitriharding/cursor-recorder-mac-app/releases/latest)**:
 
-1. Download `Cursor Recorder.zip`, unzip, and move **Cursor Recorder.app** to Applications.
-2. Double-click to open (notarized — no Gatekeeper warning).
+1. Download `Cursor-Recorder-1.0.0-macOS.zip`, unzip, and move **Cursor Recorder.app** to Applications.
+2. Double-click to open. The release is signed with Developer ID and notarized by Apple, so Gatekeeper should allow it without a security override.
 3. Grant **Screen Recording** (for iPhone Mirroring / Simulator) and **Camera/Microphone**
    (for the USB iPhone source) when prompted, then relaunch.
 
@@ -80,13 +83,14 @@ the device and authorize this Mac when prompted.
 | iPhone source enablement | `Capture/CoreMediaIOEnabler.swift` |
 | Capture boundary | `Capture/PhoneCaptureAdapter.swift` |
 | iPhone capture | `Capture/IPhoneUSBCaptureAdapter.swift` |
+| Window / iPhone Mirroring / Simulator capture | `Capture/MirroringCaptureAdapter.swift` |
 | Android capture | `Capture/AndroidScrcpyCaptureAdapter.swift` |
 | Live cursor compositing | `Cursor/CursorRenderer.swift` |
 | Telemetry | `Cursor/CursorTelemetryRecorder.swift` |
 | Direct MP4 writer (iPhone) | `Recording/FrameCompositorWriter.swift` |
 | Post-process compositor (Android) | `Recording/VideoCompositor.swift` |
 | Orchestration | `Recording/RecordingCoordinator.swift` |
-| UI | `Views/ContentView.swift`, `Views/PhonePreviewView.swift` |
+| UI | `Views/ContentView.swift`, `Views/PhonePreviewView.swift`, `Views/SetupChecklistView.swift` |
 
 ### Custom cursors
 
@@ -110,10 +114,11 @@ all cursor settings + the output folder persist between launches.
 
 ### Cursor mapping
 
-The pointer position inside the preview's aspect-fit rectangle is normalized to
-phone-video coordinates (top-left origin), recorded with timestamps, and composited so the
-cursor's hotspot lands on that point — consistent for both portrait and landscape sources,
-in both the live preview and the exported MP4.
+The pointer position inside the preview's aspect-fit rectangle is normalized to source
+video coordinates (top-left origin), recorded with timestamps, and composited so the
+cursor's hotspot lands on that point — consistent for window captures, iPhone Mirroring,
+Simulator, and portrait or landscape phone sources in both the live preview and exported
+MP4.
 
 ## V1 notes / limitations
 
@@ -122,4 +127,4 @@ in both the live preview and the exported MP4.
 - iPhone capture requires a Mac/macOS/device combination that exposes the iPhone as a
   capture source (the same mechanism QuickTime uses). If it isn't exposed, the app shows an
   explicit unsupported/waiting-for-trust state.
-- Signing/notarization is a later packaging milestone (see `asc-notarization`).
+- The GitHub release build is signed with Developer ID, notarized by Apple, and stapled.
