@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# XcodeGen output (regenerate with `xcodegen generate`)
+*.xcodeproj/
+
+# Build artifacts
+build/
+DerivedData/
+dist/
+*.zip
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
